@@ -1,0 +1,8 @@
+.
+├── app
+│   ├── main.py          # 主應用程式
+│   ├── routers          # 路由模組
+│   │   └── users.py
+│   ├── models.py        # 資料模型
+│   └── schemas.py       # 輸入/輸出資料格式
+└── requirements.txt     # 依賴套件
