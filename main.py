@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-from routers import login
-from util.auth import verify_password, get_password_hash, create_access_token
+from routers import loginO
 from fastapi.middleware.cors import CORSMiddleware
-
+from database import Base, engine
 app = FastAPI(title="Modular FastAPI Project")
 
 origins = [
@@ -16,10 +15,7 @@ app.add_middleware(
     allow_methods=["*"],              # 允許所有 HTTP 方法 (GET, POST, PUT, DELETE...)
     allow_headers=["*"],              # 允許所有 headers
 )
-
+Base.metadata.create_all(bind=engine)
 # 將不同路由模組註冊到主應用
-app.include_router(login.router, prefix="/auth", tags=["Users"])
+app.include_router(router=loginO.router,prefix="/auth")
 
-# @app.get("/api/hello")
-# async def read_hello():
-#     return {"message": "Hello from FastAPI!"}
