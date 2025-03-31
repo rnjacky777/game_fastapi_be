@@ -17,5 +17,5 @@ app.add_middleware(
 )
 Base.metadata.create_all(bind=engine)
 # 將不同路由模組註冊到主應用
-app.include_router(router=loginO.router,prefix="/auth")
+app.include_router(router=loginO.router,prefix="/api/auth")
 
