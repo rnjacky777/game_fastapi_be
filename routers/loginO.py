@@ -1,21 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from models.user import User
-from util.auth import verify_password, create_access_token
+from services.auth_service import authenticate_user, AuthenticationError
 from database import SessionLocal
-from pydantic import BaseModel
-from datetime import timedelta
-from pydantic import BaseModel
+from schemas.login import LoginRequest, Token
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
 
 router = APIRouter()
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 def get_db():
     db = SessionLocal()
@@ -24,17 +16,15 @@ def get_db():
     finally:
         db.close()
 
+
 @router.post("/login", response_model=Token)
 async def login(form_data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    try:
+        access_token = authenticate_user(
+            db, form_data.username, form_data.password)
+        return {"access_token": access_token, "token_type": "bearer"}
+    except AuthenticationError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password"
+            detail=str(e)
         )
-
-    access_token = create_access_token(
-        data={"sub": user.username},
-        expires_delta=timedelta(minutes=30)
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
