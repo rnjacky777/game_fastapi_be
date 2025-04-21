@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, ForeignKey
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, ForeignKey,Column
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from database import Base
@@ -16,6 +16,12 @@ class User(Base):
 
     # Package
     money: Mapped[int] = mapped_column(default=0)
+    current_progress_id = Column(Integer, ForeignKey('user_map_progress.id'))
+    current_progress = relationship("UserMapProgress", uselist=False)
+    # 一支隊伍的六個成員（或少於六個）
+    team_members: Mapped[list["UserTeamMember"]] = relationship(
+        "UserTeamMember", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # logging
     characters: Mapped[list["UserChar"]] = relationship(
@@ -53,3 +59,14 @@ class UserChar(Base):
     owner: Mapped["User"] = relationship("User", back_populates="characters")
     template: Mapped["CharTemp"] = relationship( # type: ignore
         "CharTemp", back_populates="user_chars")  # type: ignore
+
+class UserTeamMember(Base):
+    __tablename__ = "user_team_members"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_char_id: Mapped[int] = mapped_column(ForeignKey("user_chars.id"), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)  # 位置 0~5，代表第幾格
+
+    user: Mapped["User"] = relationship("User", back_populates="team_members")
+    user_char: Mapped["UserChar"] = relationship("UserChar")
