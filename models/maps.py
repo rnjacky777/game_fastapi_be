@@ -3,27 +3,10 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from database import Base
-
+from models.association_tables import map_connection
 # 多地圖連結
-map_connection = Table(
-    "map_connection",
-    Base.metadata,
-    Column("from_map_id", ForeignKey("maps.id"), primary_key=True),
-    Column("to_map_id", ForeignKey("maps.id"), primary_key=True)
-)
-map_area_event_association = Table(
-    "map_area_event_association",
-    Base.metadata,
-    Column("map_area_id", ForeignKey("map_areas.id"), primary_key=True),
-    Column("event_id", ForeignKey("events.id"), primary_key=True),
-)
-# 關聯表：地圖與事件的多對多關聯
-map_event_association = Table(
-    "map_event_association",
-    Base.metadata,
-    Column("map_id", ForeignKey("maps.id"), primary_key=True),
-    Column("event_id", ForeignKey("events.id"), primary_key=True)
-)
+
+
 
 
 class Map(Base):
@@ -37,7 +20,7 @@ class Map(Base):
     # 與事件建立多對多關聯
     events: Mapped[list["Event"]] = relationship( # type: ignore
         "Event",
-        secondary=map_event_association,
+        secondary="map_event_association",
         back_populates="maps"
     )
 
@@ -64,7 +47,7 @@ class UserMapProgress(Base):
     __tablename__ = "user_map_progress"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    # user_id: Mapped[int] = mapped_column(ForeignKey("users.id")) Skip
     map_id: Mapped[int] = mapped_column(ForeignKey("maps.id"))
     
     # 進度數值可以是百分比、已完成事件數等
@@ -72,7 +55,7 @@ class UserMapProgress(Base):
     is_completed: Mapped[bool] = mapped_column(default=False)
 
     # 關聯
-    user: Mapped["User"] = relationship("User", back_populates="map_progresses") # type: ignore
+    user: Mapped["User"] = relationship("User", back_populates="current_progress") # type: ignore
     map: Mapped["Map"] = relationship("Map", back_populates="user_progresses")
 
 
@@ -86,9 +69,9 @@ class MapArea(Base):
     image_url: Mapped[str] = mapped_column(String(255), nullable=True)
 
     # 關聯可暫時註解或保留
-    map: Mapped["Map"] = relationship("Map", backref="areas")  # 可暫時不使用
-    events: Mapped[list["Event"]] = relationship( # type: ignore
-        "Event",
-        secondary=map_area_event_association,
+    map = relationship("Map", back_populates="areas")  # 可暫時不使用
+    events = relationship(
+        "Event",  # <- 注意這裡是字串
+        secondary="map_area_event_association",  # 表名（字串）
         back_populates="areas"
     )

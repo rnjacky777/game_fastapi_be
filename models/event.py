@@ -17,7 +17,11 @@ class Event(Base):
         secondary="map_event_association",
         back_populates="events"
     )
-
+    areas = relationship(
+        "MapArea",  # <- 注意這裡是字串
+        secondary="map_area_event_association",
+        back_populates="events"
+    )
     # 其他欄位如事件劇情、條件、結果等在這邊擴充
 
 class EventResult(Base):
@@ -26,7 +30,7 @@ class EventResult(Base):
     reward_pool_id = Column(Integer, ForeignKey('reward_pools.id'))
     status_effects_json = Column(Text)  # e.g., {"poison": 3, "heal": 100}
 
-    reward_pool = relationship("RewardPool", backref="event_results")
+    reward_pool = relationship("RewardPool", back_populates="event_results")
 
 
 class RewardPool(Base):

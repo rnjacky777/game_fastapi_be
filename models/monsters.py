@@ -9,7 +9,7 @@ class Monster(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     drop_pool_id = Column(Integer, ForeignKey('reward_pools.id'))
-    drop_pool = relationship("RewardPool", backref="monsters")
+    drop_pool = relationship("RewardPool", back_populates="monsters")
 
 
 class MonsterPool(Base):

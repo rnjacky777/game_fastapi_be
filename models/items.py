@@ -9,7 +9,7 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=True)
-    # 'equipment', 'consumable', 'quest'
+    # 'equipment', 'consumable', 'quest',"material" 雜項
     item_type: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Common
