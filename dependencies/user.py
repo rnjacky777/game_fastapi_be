@@ -3,13 +3,19 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from sqlalchemy.orm import Session, joinedload, selectinload
 from core_system.models.database import SessionLocal
-from core_system.models import User  # 假設你的 User 模型是這個名稱
-SECRET_KEY = "your_secret_key"  # 替換為安全密鑰
-ALGORITHM = "HS256"
+from core_system.models.user import User, UserData, UserChar
+from core_system.config import SECRET_KEY, ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")  # 根據你的登入 endpoint 調整
+
+# tokenUrl 應該指向你登入 API 的完整相對路徑
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+class TokenData(BaseModel):
+    id: int | None = None
+
 
 def get_db():
     db = SessionLocal()
@@ -25,14 +31,32 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # 解碼 JWT
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
+        # 從 payload 中取得 user_id (subject)
+        user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except JWTError:
+        token_data = TokenData(id=int(user_id))
+    except (JWTError, ValueError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    # 預先載入 (Eager Loading) 關聯資料，以避免 DetachedInstanceError
+    # 並透過單一查詢提升效能，避免 N+1 問題。
+    # - joinedload: 用於 one-to-one 或 many-to-one (User -> UserData)
+    # - selectinload: 用於 one-to-many (UserData -> characters)
+    user = (
+        db.query(User)
+        .options(
+            joinedload(User.user_data).options(
+                selectinload(UserData.characters).options(
+                    joinedload(UserChar.template)  # 同時載入角色模板資訊
+                )
+            )
+        )
+        .filter(User.id == token_data.id)
+        .first()
+    )
     if user is None:
         raise credentials_exception
 

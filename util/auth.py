@@ -4,12 +4,10 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-
 from core_system.models.database import SessionLocal
 from core_system.models.bo_admin import Admin
+from core_system.config import SECRET_KEY, ALGORITHM
 
-SECRET_KEY = "your_secret_key"  # 替換為安全密鑰
-ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

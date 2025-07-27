@@ -10,9 +10,10 @@ from core_system.services.user_service import (
     authenticate_user,
     create_user_with_defaults,
 )
-from dependencies.db import get_db
+from dependencies.db import get_db # get_db 其實可以從 dependencies.user 引入
+from dependencies.user import get_current_user
 from schemas.login import LoginRequest, RegisterRequest, Token
-
+from core_system.models.user import User
 
 router = APIRouter()
 
@@ -22,6 +23,8 @@ router = APIRouter()
 class UserOut(BaseModel):
     id: int
     username: str
+    # 可以在這裡加入更多希望回傳給前端的使用者基本資料
+    # 例如 email, created_at 等
 
     class Config:
         orm_mode = True
@@ -73,8 +76,13 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         )
 
 
-# 暫時用
-@router.get("/userinfo")
-def user_info(db: Session = Depends(get_db)):
-    return {"current_map_id": "cave",
-            "user_id": "12345", }
+# 修正後的 userinfo 端點
+@router.get("/userinfo", response_model=UserOut)
+def read_users_me(current_user: User = Depends(get_current_user)):
+    """
+    取得當前登入使用者的資訊。
+    這個端點受 token 保護，可以用來驗證 token 的有效性。
+    """
+    # 因為 get_current_user 已經從資料庫中取得了 user 物件，
+    # 我們可以直接回傳它。Pydantic 的 response_model 會自動過濾掉敏感資料。
+    return current_user

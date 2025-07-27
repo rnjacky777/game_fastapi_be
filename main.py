@@ -1,13 +1,13 @@
 import logging
 from fastapi import FastAPI
-from routers import loginO
+from routers import loginO, user
 from fastapi.middleware.cors import CORSMiddleware
 from core_system.models.database import Base, engine
 
 # --- 加入這段來設定日誌 ---
 # 設定日誌的基本組態
 logging.basicConfig(
-    level=logging.INFO,  # 設定要顯示的最低日誌級別 (INFO, WARNING, ERROR, CRITICAL 都會顯示)
+    level=logging.ERROR,  # 設定要顯示的最低日誌級別 (INFO, WARNING, ERROR, CRITICAL 都會顯示)
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # 設定日誌輸出的格式
     handlers=[
         logging.StreamHandler()  # 確保日誌輸出到控制台 (終端機)
@@ -31,7 +31,7 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 # 將不同路由模組註冊到主應用
 app.include_router(router=loginO.router,prefix="/api/auth")
-
+app.include_router(router=user.router, prefix="/api")
 
 # BO
 # app.include_router(router=users.router,prefix="/admin/users")
