@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from pydantic import BaseModel
 
 
 class Token(BaseModel):
@@ -8,5 +7,10 @@ class Token(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
     username: str
     password: str

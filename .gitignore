@@ -1,1 +1,7 @@
 *.pyc
+tool/
+*.db
+map_DB
+map.txt
+text
+TODO
