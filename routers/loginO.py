@@ -1,20 +1,13 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from models.user import User
-from services.auth_service import authenticate_user, AuthenticationError
-from database import SessionLocal
-from schemas.login import LoginRequest, Token
+from core_system.models.user import User
+from core_system.services.user_service import add_user, authenticate_user, AuthenticationError, create_user_char, create_user_data, get_all_user
+from dependencies.db import get_db
+from schemas.login import LoginRequest, Token, RegisterRequest
 
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/login", response_model=Token)
@@ -28,3 +21,21 @@ async def login(form_data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e)
         )
+
+
+@router.post("/register")
+def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    new_user = add_user(db=db,
+                        username=data.username,
+                        password=data.password)
+    create_user_data(db=db,user_id=new_user.id)
+    create_user_char(db=db, char_id=1, target_user_id=new_user.id)
+    
+
+    return {"message": "success"}
+
+# 暫時用
+@router.get("/userinfo")
+def user_info(db: Session = Depends(get_db)):
+    return {"current_map_id": "cave",
+            "user_id": "12345", }
