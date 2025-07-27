@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -10,9 +10,10 @@ from core_system.services.user_service import (
     authenticate_user,
     create_user_with_defaults,
 )
-from dependencies.db import get_db # get_db 其實可以從 dependencies.user 引入
+from dependencies.db import get_db  # get_db 其實可以從 dependencies.user 引入
 from dependencies.user import get_current_user
 from schemas.login import LoginRequest, RegisterRequest, Token
+from schemas.user import UserDataResponse
 from core_system.models.user import User
 
 router = APIRouter()
@@ -23,11 +24,9 @@ router = APIRouter()
 class UserOut(BaseModel):
     id: int
     username: str
-    # 可以在這裡加入更多希望回傳給前端的使用者基本資料
-    # 例如 email, created_at 等
+    user_data: UserDataResponse | None = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.post("/login", response_model=Token)

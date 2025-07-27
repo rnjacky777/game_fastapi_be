@@ -50,8 +50,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         .options(
             joinedload(User.user_data).options(
                 selectinload(UserData.characters).options(
-                    joinedload(UserChar.template)  # 同時載入角色模板資訊
-                )
+                    joinedload(UserChar.template)  # 載入角色模板
+                ),
+                joinedload(UserData.current_map),   # 預先載入當前地圖資訊
+                joinedload(UserData.current_area)  # 預先載入當前區域資訊
             )
         )
         .filter(User.id == token_data.id)
