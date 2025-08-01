@@ -7,6 +7,8 @@ class CharTempBase(BaseModel):
     name: str
     rarity: int
     description: str | None = None
+    image_sm_url: str | None = None
+    image_lg_url: str | None = None
     base_hp: int
     base_mp: int
     base_atk: int
