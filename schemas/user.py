@@ -73,4 +73,4 @@ class UserCharSimpleResponse(BaseModel):
     char_temp_id: int
     name: str
     level: int
-    image_sm_url:str
+    image_sm_url: str | None = None

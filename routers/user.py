@@ -1,8 +1,10 @@
 import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from core_system.models.user import User, UserTeamMember
+from sqlalchemy.orm import selectinload
+from core_system.models.user import User, UserData, UserTeamMember
 from core_system.services.user_service import create_team
 from dependencies.db import get_db
 from dependencies.user import get_current_user  # 假設此函式用於驗證並取得當前使用者
@@ -17,6 +19,7 @@ router = APIRouter(
 
 def _create_team_response(team_members: List[UserTeamMember]) -> List[UserTeamMemberResponse]:
     """輔助函式，從 UserTeamMember 物件建立隊伍回應。"""
+    logging.info([member.user_char.id for member in team_members])
     return [
         UserTeamMemberResponse(
             user_char_id=member.user_char.id,
@@ -75,35 +78,38 @@ def get_user_team(
 def update_user_team(
     team_data: UpdateTeamRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),  # 其 .id 可用，但不要直接用它的 relationship
 ):
     """
-    更新當前登入使用者的隊伍。
-
-    此操作會將舊隊伍完全替換為新隊伍。
+    更新當前登入使用者的隊伍。將舊隊伍完全替換為新隊伍。
     """
-    if not current_user.user_data:
-        raise HTTPException(
-            status_code=404, detail="User data not found for this user."
+    # 1. 重新在這個 session 裡查出 user_data（避免 detached instance）
+    stmt = (
+        select(UserData)
+        .join(User)
+        .where(User.id == current_user.id)
+        .options(
+            selectinload(UserData.team_members)
         )
+    )
+    user_data = db.scalar(stmt)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User data not found for this user.")
 
     try:
-        # 呼叫服務層的函式來處理業務邏輯
         create_team(
             db=db,
-            user_data=current_user.user_data,
-            selected_char_ids=team_data.char_ids
+            user_data=user_data,
+            selected_char_ids=team_data.char_ids,
         )
         db.commit()
-        # 刷新 user_data 以獲取最新的 team_members 關聯
-        db.refresh(current_user.user_data)
-        # 回傳更新後的隊伍
-        return _create_team_response(current_user.user_data.team_members)
+        # 不需要 refresh current_user，也不要用 current_user.user_data（它可能不是同一 session）
+        # 回傳更新後的隊伍：用 user_data 裡的 team_members（這個 instance 是 session 綁定的）
+        return _create_team_response(user_data.team_members)
     except ValueError as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         db.rollback()
-        # 記錄未預期的錯誤，以便於後續追蹤和除錯
         logging.error(f"An unexpected error occurred while updating user team: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="An internal server error occurred.")

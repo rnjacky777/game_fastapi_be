@@ -7,7 +7,7 @@ from core_system.models.database import Base, engine
 # --- 加入這段來設定日誌 ---
 # 設定日誌的基本組態
 logging.basicConfig(
-    level=logging.ERROR,  # 設定要顯示的最低日誌級別 (INFO, WARNING, ERROR, CRITICAL 都會顯示)
+    level=logging.DEBUG,  # 設定要顯示的最低日誌級別 (INFO, WARNING, ERROR, CRITICAL 都會顯示)
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # 設定日誌輸出的格式
     handlers=[
         logging.StreamHandler()  # 確保日誌輸出到控制台 (終端機)
