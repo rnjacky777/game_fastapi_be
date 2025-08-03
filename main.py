@@ -1,6 +1,6 @@
 import logging
 from fastapi import FastAPI
-from routers import loginO, user
+from routers import loginO, user ,eventO
 from fastapi.middleware.cors import CORSMiddleware
 from core_system.models.database import Base, engine
 
@@ -32,6 +32,7 @@ Base.metadata.create_all(bind=engine)
 # 將不同路由模組註冊到主應用
 app.include_router(router=loginO.router,prefix="/api/auth")
 app.include_router(router=user.router, prefix="/api")
+app.include_router(router=eventO.router, prefix="/api")
 
 # BO
 # app.include_router(router=users.router,prefix="/admin/users")
