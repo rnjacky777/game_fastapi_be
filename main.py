@@ -18,7 +18,7 @@ logging.basicConfig(
 
 app = FastAPI(title="Modular FastAPI Project",
               openapi_version="3.1.0",
-              root_path="/game_api")
+              root_path="/api")
 
 origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
