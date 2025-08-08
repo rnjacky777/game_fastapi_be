@@ -1,0 +1,37 @@
+name: Deploy game be to GCP VM
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive 
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github-actions
+        chmod 600 ~/.ssh/github-actions
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Copy files to VM
+      run: |
+        rsync -avz --exclude=".git" -e "ssh -i ~/.ssh/github-actions -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/game_be
+
+    - name: Remote Docker Compose Build and Up
+      run: |
+        ssh -i ~/.ssh/github-actions -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+          cd ~/game_be
+          docker compose down
+          docker compose build
+          docker compose up -d
+        EOF

@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: game_be_app
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      - ../shared_db:/db  # 將主機的 ./data 資料夾掛載到 container 的 /app/data
+    restart: always
+    
