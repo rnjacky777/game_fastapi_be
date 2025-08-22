@@ -1,20 +1,41 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
-class DrawEventRequest(BaseModel):
-    map_id: int
-    area_id: int  # 一起比對防竄改
 
-class CharacterStateChange(BaseModel):
+class EventDrawRequest(BaseModel):
+    map_id: int = Field(..., description="所在地圖 ID")
+    map_area_id: int = Field(..., description="所在地圖區域 ID")
+
+
+class ItemReward(BaseModel):
+
+    item_id: int
+    qty: int = 1
+
+
+class CharacterDelta(BaseModel):
+
     char_id: int
-    delta_hp: Optional[int]
-    delta_exp: Optional[int]
-    status_effects: Optional[List[str]] = []
+    hp_delta: int = 0
+    mp_delta: int = 0
+    atk_delta: int = 0
+    def_delta: int = 0
+    spd_delta: int = 0
+    # 其他狀態變化...
 
-class DrawEventResponse(BaseModel):
-    event_type: str
-    event_template_id: Optional[int]
-    story_text: str  # 抽到的主劇情/前置
-    result_text: str  # 根據 result 的回饋文
-    character_changes: List[CharacterStateChange]
-    extra: dict  # 例如 battle setup / loot / exploration progress
+
+class EventAppliedResult(BaseModel):
+
+    event_id: int
+    story_text: str
+    result_text: str
+    rewards: List[ItemReward] = []
+    char_changes: List[CharacterDelta] = []
+    # 其他：例如探索度變化、觸發後續事件 id 等
+
+
+class EventDrawResponse(BaseModel):
+
+    success: bool
+    result: Optional[EventAppliedResult] = None
+    message: Optional[str] = None

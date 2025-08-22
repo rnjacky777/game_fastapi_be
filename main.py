@@ -21,6 +21,11 @@ app = FastAPI(title="Modular FastAPI Project",
               root_path="/api")
 
 origins = os.getenv("CORS_ORIGINS", "*").split(",")
+origins = [
+    "http://localhost",  # Vite React 開發環境
+    "http://127.0.0.1",  # 有時瀏覽器會用 127.0.0.1
+    "http://localhost:5173"
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,             # 可允許的來源
